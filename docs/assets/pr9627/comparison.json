@@ -1,0 +1,87 @@
+{
+  "scope": "One real pretrained image pair on RTX 4060 Ti; local visual/precision evidence, not an A800 performance benchmark or general quality evaluation.",
+  "code_commit": "8ecd7d3de8d37ac11dfb193692d9685a040c6e49",
+  "model": {
+    "id": "openmoss/MOSS-Image-Base",
+    "snapshot": "1f920e15816c63f25466e4e37cf50647976aa5c2",
+    "manifest_files": 37,
+    "download_integrity": "ModelScope SHA256 validation; all 37 downloaded file manifest hashes match this snapshot."
+  },
+  "hardware": {
+    "gpu": "NVIDIA GeForce RTX 4060 Ti",
+    "gpu_memory_MiB": 16380
+  },
+  "versions": {
+    "torch": "2.13.0+cu130",
+    "vllm": "0.32.0",
+    "vllm-omni": "0.32.0.dev0+g8ecd7d3de",
+    "transformers": "5.19.0",
+    "diffusers": "0.40.0"
+  },
+  "request": {
+    "prompt": "A ceramic teapot on a wooden table",
+    "negative_prompt": "",
+    "seed": 0,
+    "height": 1024,
+    "width": 1024,
+    "num_inference_steps": 50,
+    "guidance_scale": 3.0,
+    "flow_shift": 5.0
+  },
+  "engine": {
+    "entrypoint": "vllm_omni.entrypoints.omni.Omni",
+    "dtype": "bfloat16",
+    "enforce_eager": true,
+    "tensor_parallel_size": 1,
+    "sequence_parallel_size": 1,
+    "max_num_seqs": 1,
+    "cache_backend": "none",
+    "offload": {
+      "mode": "layer",
+      "components": [
+        "dit",
+        "text_encoder"
+      ],
+      "pin_memory": false
+    },
+    "attention": {
+      "default": {
+        "backend": "TORCH_SDPA"
+      }
+    }
+  },
+  "local_loading_helper": "text_encoder from_pretrained(device_map='cpu') in both variants; production transformer/offload/forward code unchanged",
+  "execution": "Production MOSS pipeline, transformer and INT8 kernels; no transformer or quantization-kernel mocks. Each variant ran in its own process, with a 256x256 one-step smoke request before the 1024x1024 request.",
+  "timing_scope": "Single local requests including CPU layer transfers, after a smaller smoke request; no repeats or measured device-peak comparison. Do not use these timings as an A800 speedup claim.",
+  "variants": {
+    "bf16": {
+      "quantization": null,
+      "scope": "BF16 reference",
+      "initialization_seconds": 198.63873749999766,
+      "single_request_seconds": 206.0636802750014
+    },
+    "int8": {
+      "quantization": "int8",
+      "scope": "main DiT projections",
+      "initialization_seconds": 237.73360466399754,
+      "single_request_seconds": 109.56757374000154
+    }
+  },
+  "metrics": {
+    "psnr_db": 32.811432015162126,
+    "ssim": 0.9898682191999862,
+    "method": "scikit-image peak_signal_noise_ratio and structural_similarity; uint8 RGB, data_range=255, SSIM channel_axis=-1 (default window/settings)."
+  },
+  "images": {
+    "bf16": {
+      "file": "moss-bf16-4060ti.png",
+      "bytes": 1210324,
+      "sha256": "7bb9ef1a128b880311948d7d184bb6492aec8fdb944d3f0dcfa520fd63762ada"
+    },
+    "int8": {
+      "file": "moss-int8-4060ti.png",
+      "bytes": 1223848,
+      "sha256": "7ac7dbcfb8cbed37278b0947a0bf5eeadfff86288a490281613d8d16834968da"
+    }
+  }
+}
